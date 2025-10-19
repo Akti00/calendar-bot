@@ -7,6 +7,11 @@ app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def handle_command():
+    # Проверяем ключ безопасности
+    key = request.headers.get("X-API-KEY")
+    if key != os.environ.get("API_KEY"):
+        return jsonify({"status": "error", "message": "unauthorized"}), 403
+
     data = request.get_json()
     command = data.get("command", "").lower()
 
@@ -20,7 +25,8 @@ def handle_command():
     )
     service = build("calendar", "v3", credentials=creds)
 
-    if "добавь" in command and "работу" in command:
+    # 💼 Добавление события "работа"
+    if "добавь" in command and "работ" in command:
         tomorrow = datetime.datetime.utcnow() + datetime.timedelta(days=1)
         start = tomorrow.replace(hour=8, minute=0, second=0, microsecond=0)
         end = tomorrow.replace(hour=17, minute=0, second=0, microsecond=0)
@@ -33,4 +39,3 @@ def handle_command():
         return jsonify({"status": "ok", "message": "Событие 'Работа' добавлено!"})
 
     return jsonify({"status": "ok", "message": f"Команда '{command}' получена."})
-
